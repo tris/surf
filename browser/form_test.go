@@ -408,6 +408,37 @@ func TestSubmitMultipart(t *testing.T) {
 	ut.AssertContains("image=profile.png", bow.Body())
 	ut.AssertContains(fmt.Sprintf("profile.png=%s", url.QueryEscape(image)), bow.Body())
 }
+func TestBrowserFormInputButton(t *testing.T) {
+	ts := setupTestServer(`
+<!doctype html>
+<html>
+	<head>
+		<title>Echo Form</title>
+	</head>
+	<body>
+		<form method="post" action="/" name="default">
+			<input type="text" name="age" value="" />
+			<input type="button" name="btn" value="buttonvalue" />
+		</form>
+	</body>
+</html>`, t)
+	defer ts.Close()
+
+	bow := newBrowser()
+
+	err := bow.Open(ts.URL)
+	ut.AssertNil(err)
+
+	f, err := bow.Form("[name='default']")
+	ut.AssertNil(err)
+
+	err = f.Input("age", "30")
+	ut.AssertNil(err)
+	err = f.Click("btn")
+	ut.AssertNil(err)
+	ut.AssertContains("age=30", bow.Body())
+	ut.AssertContains("btn=buttonvalue", bow.Body())
+}
 
 func setupTestServer(html string, t *testing.T) *httptest.Server {
 	ut.Run(t)
